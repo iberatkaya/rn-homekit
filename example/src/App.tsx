@@ -1,18 +1,57 @@
 import * as React from 'react';
+import Slider from '@react-native-community/slider';
 
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'rn-homekit';
+import { StyleSheet, View, Text, Button } from 'react-native';
+import {
+  getHomeAccessories,
+  getAccessoryServices,
+  setAccessoryValue,
+} from 'rn-homekit';
+import { useState } from 'react';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
+  const [value, setValue] = useState(0);
+
+  const setBrightness = () => {
+    getHomeAccessories().then((accessories) => {
+      getAccessoryServices(accessories[0].id).then((services) => {
+        services.forEach((c) => {
+          c.characteristics.forEach((characteristic) => {
+            if (
+              characteristic.properties.writable &&
+              characteristic.characteristicType?.type === 'light' &&
+              characteristic.characteristicType?.name === 'lightLevel'
+            ) {
+              setAccessoryValue({
+                accessoryId: accessories[0].id,
+                characteristicId: characteristic.id,
+                serviceId: c.id,
+                value: value,
+              });
+            }
+          });
+        });
+      });
+    });
+  };
 
   React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+    setBrightness();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <Text>Brightness: {value}</Text>
+      <Slider
+        style={{ width: 200, height: 40 }}
+        minimumValue={0}
+        maximumValue={100}
+        minimumTrackTintColor="#77f"
+        maximumTrackTintColor="#cef"
+        value={value}
+        onValueChange={setValue}
+      />
+      <Button title="call" onPress={setBrightness} />
     </View>
   );
 }
@@ -22,10 +61,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
   },
 });

@@ -1,58 +1,112 @@
 import * as React from 'react';
 import Slider from '@react-native-community/slider';
 
-import { StyleSheet, View, Text, Button } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
 import {
   getHomeAccessories,
   getAccessoryServices,
   setAccessoryValue,
+  getAuthorizationStatus,
 } from 'rn-homekit';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { HMAccessory, HMService } from 'src/types';
 
 export default function App() {
-  const [value, setValue] = useState(0);
+  const [connected, setConnected] = useState(false);
+  const [accessories, setAccessories] = useState<HMAccessory[]>([]);
+  const [services, setServices] = useState<HMService[]>([]);
 
-  const setBrightness = () => {
-    getHomeAccessories().then((accessories) => {
-      getAccessoryServices(accessories[0].id).then((services) => {
-        services.forEach((c) => {
-          c.characteristics.forEach((characteristic) => {
-            if (
-              characteristic.properties.writable &&
-              characteristic.characteristicType?.type === 'light' &&
-              characteristic.characteristicType?.name === 'lightLevel'
-            ) {
-              setAccessoryValue({
-                accessoryId: accessories[0].id,
-                characteristicId: characteristic.id,
-                serviceId: c.id,
-                value: value,
-              });
-            }
-          });
-        });
+  const getAccessories = () => {
+    getHomeAccessories().then(async (myAccessories) => {
+      setAccessories(myAccessories);
+      const promises: Promise<HMService[]>[] = [];
+      myAccessories.forEach((i) => {
+        promises.push(getAccessoryServices(i.id));
       });
+      const myServices = await Promise.all(promises);
+      setServices(myServices.flat());
     });
   };
 
-  React.useEffect(() => {
-    setBrightness();
+  function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  useEffect(() => {
+    const func = async () => {
+      let loading = true;
+      while (loading) {
+        const status = await getAuthorizationStatus();
+        if (status === 'authorized') {
+          loading = false;
+          setConnected(true);
+          await sleep(500);
+          getAccessories();
+        }
+        await sleep(200);
+      }
+    };
+
+    func();
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text>Brightness: {value}</Text>
-      <Slider
-        style={{ width: 200, height: 40 }}
-        minimumValue={0}
-        maximumValue={100}
-        minimumTrackTintColor="#77f"
-        maximumTrackTintColor="#cef"
-        value={value}
-        onValueChange={setValue}
+    <SafeAreaView style={styles.container}>
+      {!connected && <ActivityIndicator size="large" />}
+      <FlatList
+        data={accessories}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View>
+            <Text>{item.name}</Text>
+            <FlatList
+              data={services.map((i) => {
+                return {
+                  ...i,
+                  characteristics: i.characteristics.filter(
+                    (j) => j.properties.writable === true
+                  ),
+                };
+              })}
+              renderItem={({ item: service }) => (
+                <View>
+                  <Text>{service.name}</Text>
+                  <FlatList
+                    data={service.characteristics}
+                    renderItem={({ item: characteristic }) => (
+                      <View>
+                        <Text>{characteristic.characteristicType?.name}</Text>
+                        <Slider
+                          minimumValue={characteristic.minimumValue}
+                          maximumValue={characteristic.maximumValue}
+                          value={characteristic.value}
+                          onSlidingComplete={async (v) => {
+                            await setAccessoryValue({
+                              serviceId: service.id,
+                              accessoryId: item.id,
+                              characteristicId: characteristic.id,
+                              value: v,
+                            });
+                          }}
+                        />
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
+              keyExtractor={(item) => item.id}
+            />
+          </View>
+        )}
       />
-      <Button title="call" onPress={setBrightness} />
-    </View>
+    </SafeAreaView>
   );
 }
 

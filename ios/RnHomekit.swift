@@ -8,6 +8,16 @@ class RnHomekit: NSObject {
         super.init()
         homeManager = HMHomeManager()
     }
+    
+    @objc
+    func authorizationStatus(_ resolve: RCTPromiseResolveBlock, withRejecter reject: RCTPromiseRejectBlock) -> Void {
+        let status = self.homeManager.authorizationStatus
+        resolve(mapAuthStatusToString(status)?.rawValue)
+    }
+
+    @objc static func requiresMainQueueSetup() -> Bool {
+        return false
+    }
 
     @objc(multiply:withB:withResolver:withRejecter:)
     func multiply(a: Float, b: Float, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {

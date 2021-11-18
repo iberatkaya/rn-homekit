@@ -30,4 +30,8 @@ RCT_EXTERN_METHOD(setAccessoryValue:
                 withValue:(NSNumber *_Nonnull)value
                 withResolver:(RCTPromiseResolveBlock)resolve
                 withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(authorizationStatus:
+                  (RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
 @end

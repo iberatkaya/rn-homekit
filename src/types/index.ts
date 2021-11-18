@@ -21,7 +21,7 @@ export interface HMCharacteristic {
     supportsEventNotification: boolean;
   };
   characteristicType: {
-    name: ChacteristicAction;
+    name: LightChacteristicAction;
     type: DeviceTypes;
   } | null;
   value: any;
@@ -31,9 +31,11 @@ export interface HMCharacteristic {
 
 export type DeviceTypes = 'light';
 
-export type ChacteristicAction =
+export type LightChacteristicAction =
   | 'lightCurrentLevel'
   | 'lightHue'
   | 'lightLevel'
   | 'lightSaturation'
   | 'lightColorTemparature';
+
+export type AuthStatus = 'authorized' | 'determined' | 'restricted';

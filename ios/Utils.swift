@@ -30,19 +30,33 @@ enum ChacteristicAction: String {
 }
 
 func mapCharacteristicToString(_ characteristic: String) -> CharacteristicType? {
-    switch characteristic {
-        case HMCharacteristicTypeCurrentLightLevel:
-            return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightCurrentLevel)
-        case HMCharacteristicTypeHue:
-            return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightHue)
-        case HMCharacteristicTypeBrightness:
-            return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightLevel)
-        case HMCharacteristicTypeSaturation:
-            return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightSaturation)
-        case HMCharacteristicTypeColorTemperature:
-            return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightColorTemparature)
-
-        default:
-            return nil
+    if characteristic == HMCharacteristicTypeCurrentLightLevel {
+        return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightCurrentLevel)
+    } else if characteristic == HMCharacteristicTypeHue {
+        return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightHue)
+    } else if characteristic == HMCharacteristicTypeBrightness {
+        return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightLevel)
+    } else if characteristic == HMCharacteristicTypeSaturation {
+        return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightSaturation)
+    } else if characteristic == HMCharacteristicTypeColorTemperature {
+        return CharacteristicType(type: DeviceTypes.Light, name: ChacteristicAction.lightColorTemparature)
     }
+    return nil
+}
+
+enum AuthStatus: String {
+    case authorized
+    case determined
+    case restricted
+}
+
+func mapAuthStatusToString(_ status: HMHomeManagerAuthorizationStatus) -> AuthStatus? {
+    if status.contains(.authorized) {
+        return AuthStatus.authorized
+    } else if status.contains(.determined) {
+        return AuthStatus.determined
+    } else if status.contains(.restricted) {
+        return AuthStatus.restricted
+    }
+    return nil
 }

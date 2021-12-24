@@ -9,7 +9,7 @@ RCT_EXTERN_METHOD(multiply:
                  withRejecter:(RCTPromiseRejectBlock)reject)
 
 
-RCT_EXTERN_METHOD(getHomeAccessories:
+RCT_EXTERN_METHOD(getHomes:
                   (RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 

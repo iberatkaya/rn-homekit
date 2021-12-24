@@ -244,6 +244,7 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RnHomekit;
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "RnHomekit-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -263,6 +264,7 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RnHomekit;
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "RnHomekit-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};

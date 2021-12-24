@@ -4,6 +4,8 @@ export interface HMAccessory {
   categoryDescription: string;
   id: string;
   model?: string;
+  manufacturer?: string;
+  services: HMService[];
 }
 
 export interface HMService {
@@ -24,9 +26,30 @@ export interface HMCharacteristic {
     name: LightChacteristicAction;
     type: DeviceTypes;
   } | null;
-  value: any;
-  minimumValue: number;
-  maximumValue: number;
+  value?: any;
+  minimumValue?: number;
+  maximumValue?: number;
+}
+
+export interface HMRoom {
+  id: string;
+  name: string;
+  accessories: HMAccessory[];
+}
+
+export interface HMServiceGroup {
+  id: string;
+  name: string;
+  services: HMService[];
+}
+
+export interface HMHome {
+  id: string;
+  name: string;
+  isPrimary: boolean;
+  rooms: HMRoom[];
+  accessories: HMAccessory[];
+  serviceGroups: HMServiceGroup[];
 }
 
 export type DeviceTypes = 'light';

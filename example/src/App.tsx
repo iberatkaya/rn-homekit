@@ -10,29 +10,20 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {
-  getHomeAccessories,
-  getAccessoryServices,
+  getHomes,
   setAccessoryValue,
   getAuthorizationStatus,
 } from 'rn-homekit';
 import { useEffect, useState } from 'react';
-import type { HMAccessory, HMService } from 'src/types';
+import type { HMHome } from 'src/types';
 
 export default function App() {
   const [connected, setConnected] = useState(false);
-  const [accessories, setAccessories] = useState<HMAccessory[]>([]);
-  const [services, setServices] = useState<HMService[]>([]);
+  const [homes, setHomes] = useState<HMHome[]>([]);
 
-  const getAccessories = () => {
-    getHomeAccessories().then(async (myAccessories) => {
-      setAccessories(myAccessories);
-      const promises: Promise<HMService[]>[] = [];
-      myAccessories.forEach((i) => {
-        promises.push(getAccessoryServices(i.id));
-      });
-      const myServices = await Promise.all(promises);
-      setServices(myServices.flat());
-    });
+  const loadHomes = async () => {
+    const myHomes = await getHomes();
+    setHomes(myHomes);
   };
 
   function sleep(ms: number) {
@@ -41,16 +32,11 @@ export default function App() {
 
   useEffect(() => {
     const func = async () => {
-      let loading = true;
-      while (loading) {
-        const status = await getAuthorizationStatus();
-        if (status === 'authorized') {
-          loading = false;
-          setConnected(true);
-          await sleep(500);
-          getAccessories();
-        }
-        await sleep(200);
+      const status = await getAuthorizationStatus();
+      if (status === 'authorized') {
+        setConnected(true);
+        await sleep(500);
+        await loadHomes();
       }
     };
 
@@ -61,47 +47,78 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       {!connected && <ActivityIndicator size="large" />}
       <FlatList
-        data={accessories}
+        data={homes}
+        contentContainerStyle={{ minWidth: '80%' }}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View>
             <Text>{item.name}</Text>
             <FlatList
-              data={services.map((i) => {
-                return {
-                  ...i,
-                  characteristics: i.characteristics.filter(
-                    (j) => j.properties.writable === true
-                  ),
-                };
-              })}
-              renderItem={({ item: service }) => (
+              data={item.accessories}
+              keyExtractor={(item) => item.id}
+              renderItem={(accessoryItem) => (
                 <View>
-                  <Text>{service.name}</Text>
+                  <Text>{accessoryItem.item.name}</Text>
                   <FlatList
-                    data={service.characteristics}
-                    renderItem={({ item: characteristic }) => (
+                    data={accessoryItem.item.services.sort((i, j) =>
+                      i.id > j.id ? 1 : -1
+                    )}
+                    keyExtractor={(item) => item.id}
+                    renderItem={(serviceItem) => (
                       <View>
-                        <Text>{characteristic.characteristicType?.name}</Text>
-                        <Slider
-                          minimumValue={characteristic.minimumValue}
-                          maximumValue={characteristic.maximumValue}
-                          value={characteristic.value}
-                          onSlidingComplete={async (v) => {
-                            await setAccessoryValue({
-                              serviceId: service.id,
-                              accessoryId: item.id,
-                              characteristicId: characteristic.id,
-                              value: v,
-                            });
-                          }}
+                        <Text>{serviceItem.item.name}</Text>
+                        <FlatList
+                          data={serviceItem.item.characteristics
+                            .filter((i) => i.properties.writable)
+                            .sort((i, j) => (i.id > j.id ? 1 : -1))}
+                          keyExtractor={(item) => item.id}
+                          renderItem={({ item }) => (
+                            <View
+                              style={{
+                                borderColor: '#ccc',
+                                borderRadius: 8,
+                                marginVertical: 4,
+                              }}
+                            >
+                              <Text>
+                                {item.characteristicType
+                                  ? 'Name: ' +
+                                    item.characteristicType.name +
+                                    ', Type: ' +
+                                    item.characteristicType.type
+                                  : ''}
+                              </Text>
+                              <Text>
+                                Min: {item.minimumValue} Max:{' '}
+                                {item.maximumValue}
+                              </Text>
+                              <Text>{item.value}</Text>
+                              <Slider
+                                minimumValue={item.minimumValue}
+                                maximumValue={item.maximumValue}
+                                value={item.value}
+                                onSlidingComplete={async (value) => {
+                                  try {
+                                    await setAccessoryValue({
+                                      accessoryId: accessoryItem.item.id,
+                                      serviceId: serviceItem.item.id,
+                                      characteristicId: item.id,
+                                      value,
+                                    });
+                                    await loadHomes();
+                                  } catch (e) {
+                                    console.error(e);
+                                  }
+                                }}
+                              />
+                            </View>
+                          )}
                         />
                       </View>
                     )}
                   />
                 </View>
               )}
-              keyExtractor={(item) => item.id}
             />
           </View>
         )}
